@@ -62,8 +62,8 @@ func createChannels() {
 	}
 }
 
-// A goroutine representing a process in the vector clock simulation.
-func process(id int, events []string, wg *sync.WaitGroup) {
+// A goroutine representing a node in the vector clock simulation.
+func node(id int, events []string, wg *sync.WaitGroup) {
 	clock := VectorClock{}
 	clock.ID = id
 	clockValues := [][numProcesses]int{} // records all clock values for the process
@@ -119,7 +119,7 @@ func RunVectorClock(events [numProcesses][]string) {
 	wg.Add(numProcesses)
 
 	for i, processEvents := range events {
-		go process(i, processEvents, &wg)
+		go node(i, processEvents, &wg)
 	}
 	wg.Wait()
 }
@@ -134,7 +134,7 @@ func main() {
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		go process(count, strings.Split(line, " "), &wg)
+		go node(count, strings.Split(line, " "), &wg)
 		count++
 		if count > numProcesses {
 			// The file should only contain lines equal to the number of processes.
