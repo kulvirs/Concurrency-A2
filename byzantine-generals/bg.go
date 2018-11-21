@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -47,13 +48,27 @@ func majority(values []bool) string {
 }
 
 // Returns true if the value i is in the array of ints, false otherwise.
-func in(array []int, i int) bool{
-	for _, value := range(array){
+func in(array []int, i int) bool {
+	for _, value := range array {
 		if value == i {
 			return true
 		}
 	}
 	return false
+}
+
+// Prints out the decision for the given lieutenant.
+func decide(id int, value string) {
+	fmt.Printf("Lieutenant %d: %s\n", id, value)
+}
+
+// Converts the boolean command to a string.
+func convertCommand(command bool) string {
+	if command == true {
+		return "ATTACK"
+	} else {
+		return "RETREAT"
+	}
 }
 
 func commander(n int, m int, id int, loyal bool, command bool, channels []chan Message) {
@@ -70,12 +85,20 @@ func commander(n int, m int, id int, loyal bool, command bool, channels []chan M
 }
 
 func lieutenant(n int, m int, id int, loyal bool, channels []chan Message, wg *sync.WaitGroup) {
+	defer wg.Done()
 	msg := <-channels[id]
 	fmt.Printf("Lieutenant %d received message from commander with command %v\n", id, msg.Value)
 
 	prev := msg.Prev
 	prev = append(prev, id)
+	// The order from the commander.
 	order := msg.Value
+
+	if msg.Round == 0 {
+		// No traitors.
+		decide(id, convertCommand(order))
+		return
+	}
 
 	for i := 0; i < n; i++ {
 		if in(prev, i) == false {
@@ -100,8 +123,6 @@ func lieutenant(n int, m int, id int, loyal bool, channels []chan Message, wg *s
 	values = append(values, order)
 	majorityValue := majority(values)
 	fmt.Printf("Lieutenant %d: %s\n", id, majorityValue)
-
-	wg.Done()
 }
 
 func main() {
@@ -139,7 +160,7 @@ func main() {
 
 	channels := []chan Message{}
 	for range generals {
-		channels = append(channels, make(chan Message, n*n*m))
+		channels = append(channels, make(chan Message, int(math.Pow(float64(n), float64(n)))))
 	}
 
 	for i, general := range generals {
