@@ -134,6 +134,9 @@ func main() {
 
 	for scanner.Scan() {
 		line := scanner.Text()
+		if line == "" {
+			break
+		}
 		go node(count, strings.Split(line, " "), &wg)
 		count++
 		if count > numProcesses {
