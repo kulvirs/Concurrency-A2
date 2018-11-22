@@ -57,11 +57,6 @@ func in(array []int, i int) bool {
 	return false
 }
 
-// Prints out the decision for the given lieutenant.
-func decide(id int, value string) {
-	fmt.Printf("Lieutenant %d: %s\n", id, value)
-}
-
 // Converts the boolean command to a string.
 func convertCommand(command bool) string {
 	if command == true {
@@ -86,41 +81,39 @@ func commander(n int, m int, id int, loyal bool, command bool, channels []chan M
 
 func lieutenant(n int, m int, id int, loyal bool, channels []chan Message, wg *sync.WaitGroup) {
 	defer wg.Done()
-	msg := <-channels[id]
-	fmt.Printf("Lieutenant %d received message from commander with command %v\n", id, msg.Value)
-
-	prev := msg.Prev
-	prev = append(prev, id)
-	// The order from the commander.
-	order := msg.Value
-
-	if msg.Round == 0 {
-		// No traitors.
-		decide(id, convertCommand(order))
-		return
-	}
-
-	for i := 0; i < n; i++ {
-		if in(prev, i) == false {
-			// Node i has not yet received this message.
-			var newMsg Message
-			if loyal == false && i%2 == 0 {
-				// Traitor lieutenant sending to even-valued lieutenant flips the command.
-				newMsg = Message{id, prev, !msg.Value, msg.Round - 1}
-			} else {
-				newMsg = Message{id, prev, msg.Value, msg.Round - 1}
-			}
-			channels[i] <- newMsg
-		}
-	}
-
 	values := []bool{}
-	for i := 0; i < n-2; i++ {
-		msg = <-channels[id]
-		values = append(values, msg.Value)
+	numMessages := 1
+	for j := m; j >= 0; j-- {
+		messages := []Message{}
+		for k := 0; k < numMessages; k++ {
+			// receive messages
+			msg := <-channels[id]
+			//fmt.Printf("Lieutenant %d received message %v\n", id, msg)
+			values = append(values, msg.Value)
+			msg.Prev = append(msg.Prev, id)
+			messages = append(messages, msg)
+		}
+		if j != 0 {
+			// send messages
+			for _, message := range messages {
+				for i := 0; i < n; i++ {
+					if in(message.Prev, i) == false {
+						// Node i has not yet received this message.
+						var newMsg Message
+						if loyal == false && i%2 == 0 {
+							// Traitor lieutenant sending to even-valued lieutenant flips the command.
+							newMsg = Message{id, message.Prev, !message.Value, message.Round - 1}
+						} else {
+							newMsg = Message{id, message.Prev, message.Value, message.Round - 1}
+						}
+						channels[i] <- newMsg
+					}
+				}
+			}
+		}
+		numMessages = numMessages * (n - (m - j) - 2)
 	}
 
-	values = append(values, order)
 	majorityValue := majority(values)
 	fmt.Printf("Lieutenant %d: %s\n", id, majorityValue)
 }

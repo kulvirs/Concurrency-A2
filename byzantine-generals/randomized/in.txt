@@ -1,0 +1,3 @@
+1
+G0:L G1:L G2:L G3:T G4:L
+ATTACK
