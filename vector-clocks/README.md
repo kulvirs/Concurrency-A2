@@ -7,7 +7,7 @@ Upon receiving the message, node *b* then increments its own entry in its vector
 Further details of this algorithm are described in [Chapter 3](http://book.mixu.net/distsys/time.html) of *Distributed Systems - for fun and profit*.
 
 ## Implementation
-The vector clock simulation is implemented in `vc.go`. Each node in the distributed system is modelled as a goroutine called `node` that communicates with other "nodes" through channels. Each node maintains its own vector clock and updates it as events occur.   
+The vector clock simulation is implemented in `vc.go`. Each node in the distributed system is modelled as a goroutine called `node` that communicates with other "nodes" through channels. Each node maintains its own vector clock (an array of integers) and updates it as events occur.   
 The program reads input from `stdin` to determine the ordering of events at each node as well as when messages should be sent between nodes. The constant, `numProcesses` indicates the number of nodes that are running concurrently in the program. This is currently set to 3 but can be changed if we wish to test with more nodes.  
 
 ### Input 
