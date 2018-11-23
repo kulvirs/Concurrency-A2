@@ -186,6 +186,9 @@ func main() {
 	lines := []string{}
 	for scanner.Scan() {
 		line := scanner.Text()
+		if line == "" {
+			break
+		}
 		lines = append(lines, line)
 	}
 	if err := scanner.Err(); err != nil {

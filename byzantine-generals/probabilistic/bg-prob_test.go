@@ -47,7 +47,7 @@ func TestTraitorCommanderNumSuccess(t *testing.T) {
 	numTrials := 100
 	rand.Seed(time.Now().UnixNano())
 	// m is the number of traitors.
-	for m := 0; m <= 10; m++ {
+	for m := 0; m <= 50; m++ {
 		// The number of lieutenants (not including the commander), must be greater than 3*m.
 		n := 3*m + 1
 		// Keeps track of the number of successful trials.
