@@ -1,25 +1,5 @@
-# Byzantine Generals 
-
-The Byzantine Generals problem is a famous consensus problem that was first introduced in a [paper](https://www.microsoft.com/en-us/research/uploads/prod/2016/12/The-Byzantine-Generals-Problem.pdf) by Lamport in 1982.   
-
-In this problem, we have *n* generals and *m* of them are traitors. Among these generals there is one commander, who can also be a traitor. The commander sends out a command `ATTACK` or `RETREAT` to all the other lieutenants.  
-
-In the case of a loyal commander, the goal is for all loyal lieutenants to agree on the command sent by the commander. In the case of a traitor commander, the goal is for all loyal lieutenants to agree on the same command, regardless of what it is. Lamport proposes an algorithm, *OM(m)*, in his paper that solves this problem as long as *m* is less than a third of *n*.   
-
-In terms of applications, the Byzantine Generals problem boils down to solving the consensus problem in a distributed system, where we can have many nodes, some of which are faulty, and we want all the non-faulty nodes to agree on a value. 
-
-## The Process
-
-I originally began implementing a solution to this problem by trying to directly follow Lamport's algorithm, which can be found in the `lamport` sub-directory. However, after much puzzling, I realized that while Lamport's algorithm works in theory, it does not lend itself well to an actual implementation in a distributed system. For one, the algorithm uses recursion to get the values obtained by the generals at the level below it in order to calculate a majority. However, when we are writing this code for a distributed system, we cannot recurse in this way, all we can do is receive messages and send them out to other nodes.
-
-Of course its possible for each node to maintain a tree of all the values it receives over the course of the message sharing, and then calculate the majority at each level by traversing this tree, but none of this information is mentioned anywhere in Lamport's algorithm. At this point, I decided to try a different randomized approach as well that seemed much simpler, but has a probabilistic result (ie: not guaranteed to succeed). This implementation can be found in the `probabilistic` sub-directory.
-
-Overall I think the probabilistic algorithm is simpler to understand and implement. Since I had to modify my Lamport algorithm because I did not maintain a tree at each node, it no longer guaranteed correctness, and as a result, my probabilistic algorithm ended up performing much better than the Lamport one. It also used considerably less messages and space.
-
-
-
-## Implementation 2 - Probabilistic 
-This implementation can be found in the folder `probabilistic`. Each general is modelled as a separate goroutine, and generals communicate with each other through channels.   
+# Probabilistic 
+This implementation can be found in the file `bg-prob.go`. Each general is modelled as a separate goroutine, and generals communicate with each other through channels.   
 
 The algorithm I used closely follows Rabin's randomized global coin algorithm, a description of which can be found [here](https://www.cs.princeton.edu/courses/archive/fall05/cos521/byzantin.pdf). The link also contains a proof of correctness for the algorithm, and states that all loyal nodes can come to a consensus within a constant expected number of rounds.  
 
@@ -29,8 +9,8 @@ For a loyal commander, every loyal lieutenant receives the same initial command,
 
 The main limitation with this algorithm is that it relies on the notion of a "global coin flip", where every general has access to some global variable that is randomly assigned an ATTACK or RETREAT value each round. In a distributed system this may not be possible. 
 
-### Input
-A sample input file `in.txt` in the folder `probabilistic` is provided.  
+## Input
+A sample input file `in.txt` is provided.  
 The first line of the input file contains an integer, *m*, indicating the number of traitorous lieutenants (not including the commander).  
 The second line of the file contains a list of generals separated by spaces. Each general contains a value `L` or `T` after it that indicates whether it is loyal or a traitor. The first general in the list is the commander.   
 The third line contains the command that will be relayed by the commander to the rest of the lieutenants, it is either `ATTACK` or `RETREAT`
@@ -43,12 +23,14 @@ G0:L G1:T G2:L G3:L G4:L
 ATTACK
 ```
 
-### Running the Program
-To run the program with the input from the sample text file, go into the folder `probabilistic` and use the command `go run bg-prob.go < in.txt`.   
+## Running the Program
+To run the program with the input from the sample text file, use the command `go run bg-prob.go < in.txt`.   
 Or alternatively, use the command `go run bg-prob.go` and just enter the input in the terminal.
 
-### Tests
-Tests are written in `bg-prob_test.go` in the `probabilistic` folder. There are two types of tests that are run. The first verifies correctness of the algorithm in the case of a loyal commander. It checks that for increasing values of *m* starting at *m = 0* up to *m = 100*, all loyal generals always agree on the value sent out by the commander. Since we want to test the worst case when the number of traitors is maximal, for each value of *m*, we set *n = 3m + 1*.  
+## Tests
+Tests are written in `bg-prob_test.go`. 
+
+There are two types of tests that are run. The first verifies correctness of the algorithm in the case of a loyal commander. It checks that for increasing values of *m* starting at *m = 0* up to *m = 100*, all loyal generals always agree on the value sent out by the commander. Since we want to test the worst case when the number of traitors is maximal, for each value of *m*, we set *n = 3m + 1*.  
 
 The second type of test is for the case of a traitor commander but it doesn't really have a pass/fail value like the first one, since we know there are cases where my algorithm will not work for a traitor general. Instead for each value of *m* from 0 to 50 (with *n = 3m+1* for each *m*), it runs 100 trials of the program and calculates the percentage that succeed. The results from these tests are recorded below. 
 ```
@@ -107,8 +89,6 @@ The second type of test is for the case of a traitor commander but it doesn't re
 
 We can see that (aside from the trivial case of m = 0), the percentage of successes seems to increase as *m* grows and seems to be almost consistently at 100% as *m* gets very large. 
 
-### Running the Tests
-To run the tests, go into the `probabilistic` folder and use the following command: `go test`  
+## Running the Tests
+To run the tests, use the following command: `go test`  
 For verbose output, run with the `-v` option.
-
-
